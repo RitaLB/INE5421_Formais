@@ -27,9 +27,9 @@ class Node:
     Classe base para os nodos da árvore binária.
     """
     def __init__(self, value):
-        self.value = value
         self.left = None
         self.right = None
+        # self.value = value ?
 
     @property
     def is_nullable(self):
@@ -64,7 +64,7 @@ class ConcatenationNode(Node):
     Nodo de concatenação.
     """
     def __init__(self, left, right):
-        super().__init__('concat')
+        # super().__init__('concat') ?
         self.left = left
         self.right = right
     
@@ -88,10 +88,10 @@ class ConcatenationNode(Node):
 
 class OrNode(Node):
     """
-    Nodo de alternância (ou) ( * ).
+    Nodo de alternância (ou) (|)
     """
     def __init__(self, left, right):
-        super().__init__('or')
+        # super().__init__('or') ?
         self.left = left
         self.right = right
     
@@ -113,3 +113,78 @@ class OrNode(Node):
         # Implementar
         pass
 
+class StarNode(Node):
+    """
+    Nodo de estrela (zero ou mais). (*)
+    """
+    def __init__(self, child):
+        # super().__init__('star') ?
+        self.child = child
+    
+    @property
+    def is_nullable(self):
+        return True # Conferir
+    
+    @property
+    def last_pos(self):
+        # Implementar
+        pass
+
+    @property
+    def first_pos(self):
+        # Implementar
+        pass
+
+    def follow_pos(self):
+        # Implementar
+        pass
+
+class PlusNode(Node):
+    """
+    Nodo de mais (um ou mais). (+)
+    """
+    def __init__(self, child):
+        # super().__init__('plus') ?
+        self.child = child
+    
+    @property
+    def is_nullable(self):
+        return False # Conferir
+    
+    @property
+    def last_pos(self):
+        # Implementar
+        pass
+
+    @property
+    def first_pos(self):
+        # Implementar
+        pass
+
+    def follow_pos(self):
+        # Implementar
+        pass
+
+class LeafNode(Node):
+    """
+    Nodo folha (caractere).
+    """
+    def __init__(self, value, nullable=False):
+        # super().__init__(value) ?
+        self.value = value
+    
+    @property
+    def is_nullable(self):
+        return False
+    
+    @property
+    def last_pos(self):
+        return {self.value}
+
+    @property
+    def first_pos(self):
+        return {self.value}
+
+    def follow_pos(self):
+        return set()
+    
