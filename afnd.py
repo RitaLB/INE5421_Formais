@@ -15,7 +15,7 @@ class AFND:
         self.estados = estados
         self.alfabeto = alfabeto
         self.transicoes = transicoes
-        self.E_transicoes = {estado: ramos for (estado, simbolo), ramos in transicoes.items() if simbolo == 'E'}
+        self.E_transicoes = {estado: ramos for (estado, simbolo), ramos in transicoes.items() if simbolo == '&'}
         self.E_fechos = {estado: self.E_fecho(estado) for estado in estados}
         self.estado_inicial = estado_inicial
         self.estados_aceitacao = estados_aceitacao
@@ -41,7 +41,7 @@ class AFND:
 
         estados.add('s')
         estado_inicial = 's'
-        transicoes[(estado_inicial, 'E')] = {f"{af1.estado_inicial}_1", f"{af2.estado_inicial}_2"}
+        transicoes[(estado_inicial, '&')] = {f"{af1.estado_inicial}_1", f"{af2.estado_inicial}_2"}
 
         return cls(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
     
