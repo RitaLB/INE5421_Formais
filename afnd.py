@@ -1,3 +1,5 @@
+from afd import AFD
+
 class AFND:
     def __init__(self, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str]):
         """Inicializa o AFD com os estados, alfabeto, transições, estado inicial
@@ -18,6 +20,30 @@ class AFND:
         self.estado_inicial = estado_inicial
         self.estados_aceitacao = estados_aceitacao
         self.resetar()
+    
+    @classmethod
+    def uniao(cls, af1: AFD, af2: AFD) -> 'AFND':
+        """Cria um AFND que representa a união de dois AFDs.
+        
+        Args:
+            af1 (AFD): Primeiro AFD.
+            af2 (AFD): Segundo AFD.
+        
+        Returns:
+            AFND: Um novo AFND representando a união dos dois AFDs.
+        """
+        # União dos estados, alfabeto, transiçõesestados de aceitação (com ajustes no nome dos estados, para evitar conflitos)
+        estados: set[str] = {f"{estado}_1" for estado in af1.estados}|({f"{estado}_2" for estado in af2.estados})
+        alfabeto: set[str] = af1.alfabeto.union(af2.alfabeto)
+        estados_aceitacao: set[str] = {f"{estado}_1" for estado in af1.estados_aceitacao}|{f"{estado}_2" for estado in af2.estados_aceitacao}
+        transicoes: dict[tuple[str, str], set[str]] = {(f"{estado}_1", simbolo): set([f"{novo_estado}_1"]) for (estado, simbolo), novo_estado in af1.transicoes.items()}
+        transicoes.update({(f"{estado}_2", simbolo): set([f"{novo_estado}_2"]) for (estado, simbolo), novo_estado in af2.transicoes.items()})
+
+        estados.add('s')
+        estado_inicial = 's'
+        transicoes[(estado_inicial, 'E')] = {f"{af1.estado_inicial}_1", f"{af2.estado_inicial}_2"}
+
+        return cls(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
     
     def resetar(self) -> None:
         """Reseta os ramos do AFND para o estado inicial."""
@@ -53,6 +79,7 @@ class AFND:
         Args:
             simbolo (str): O símbolo a ser processado.
         """
+        #print(f"Transitando com o símbolo: {simbolo}")
         novos_ramos = set()
         for ramo in self.ramos:
             if (ramo, simbolo) in self.transicoes:
@@ -61,6 +88,7 @@ class AFND:
                 for estado in novo:
                     novos_ramos.update(self.E_fechos.get(estado, set()))
         self.ramos = novos_ramos
+        #print(f"Ramos após a transição: {self.ramos}")
 
     def aceita(self) -> bool:
         """Verifica se algum dos ramos atuais é um estado de aceitação.
@@ -68,6 +96,8 @@ class AFND:
         Returns:
             True se algum ramo atual for um estado de aceitação, False caso contrário.
         """
+        #print(f"Verificando aceitação nos ramos: {self.ramos}")
+        #print(f"Estados de aceitação: {self.estados_aceitacao}")
         return any(ramo in self.estados_aceitacao for ramo in self.ramos)
     
     def avaliar_palavra(self, palavra: str) -> bool:
@@ -90,26 +120,41 @@ class AFND:
         return self.aceita()
     
 def main():
-    # Definindo o autômato para linguagem que termina em "abb"
-    estados = {'q0', 'q1', 'q2', 'q3'}
-    alfabeto = {'a', 'b'}
-    transicoes = {
-        ('q0', 'a'): {'q0', 'q1'},
-        ('q0', 'b'): {'q0'},
-        ('q1', 'b'): {'q2'},
-        ('q2', 'b'): {'q3'},
-    }
+    # Definindo AFD em que binário mod 3 = 0
+    estados = {'q0', 'q1', 'q2'}
+    alfabeto = {'0', '1'}
     estado_inicial = 'q0'
-    estados_aceitacao = {'q3'}
+    estados_aceitacao = {'q0'}
+    transicoes = {('q0', '0'): 'q0',
+                  ('q0', '1'): 'q1',
+                  ('q1', '0'): 'q2',
+                  ('q1', '1'): 'q0',
+                  ('q2', '0'): 'q1',
+                  ('q2', '1'): 'q2'
+    }
+    af1 = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
-    # Criando o AFND
-    afnd = AFND(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+    # Definind AFD que aceita binários pares
+    estados = {'q0', 'q1'}
+    alfabeto = {'0', '1'}
+    estado_inicial = 'q0'
+    estados_aceitacao = {'q0'}
+    transicoes = {('q0', '0'): 'q0',
+                  ('q0', '1'): 'q1',
+                  ('q1', '0'): 'q0',
+                  ('q1', '1'): 'q1'
+    }
+    af2 = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
-    # Avaliando palavras
-    palavras = ['abb', 'a', 'b', 'aab', 'abb', 'abaab', 'abbb', 'aaabb']
+    # Unindo os dois AFDs
+    afnd = AFND.uniao(af1, af2)
+
+    # Testando o AFND com algumas palavras
+    palavras = ['0', '1', '00', '01', '10', '11', '000', '111', '010', '101', 
+                '110', '1111', '0000', '0011', '1100', '1110', '1010', '1001']
     for palavra in palavras:
         resultado = afnd.avaliar_palavra(palavra)
-        print(f"A palavra '{palavra}' é aceita pelo AFND? {resultado}")
+        print(f"A palavra '{palavra}' é aceita pelo AFND? {"Sim" if resultado else "Não"}")
 
 if __name__ == "__main__":
     main()
