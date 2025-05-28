@@ -39,14 +39,16 @@ class AFND:
         transicoes: dict[tuple[str, str], set[str]] = {(f"{estado}_1", simbolo): set([f"{novo_estado}_1"]) for (estado, simbolo), novo_estado in af1.transicoes.items()}
         transicoes.update({(f"{estado}_2", simbolo): set([f"{novo_estado}_2"]) for (estado, simbolo), novo_estado in af2.transicoes.items()})
 
+        # Adiciona um novo estado inicial, que vai para os antigos iniciais com transições epsilon
         estados.add('s')
         estado_inicial = 's'
         transicoes[(estado_inicial, '&')] = {f"{af1.estado_inicial}_1", f"{af2.estado_inicial}_2"}
 
+        # Retorna o novo AFND
         return cls(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
     
     def resetar(self) -> None:
-        """Reseta os ramos do AFND para o estado inicial."""
+        """Reseta os ramos do AFND para o estado inicial (e seu E-fecho)."""
         self.ramos = set([self.estado_inicial])
         self.ramos = self.ramos.union(self.E_transicoes.get(self.estado_inicial, set()))
     
@@ -62,7 +64,8 @@ class AFND:
         """
         fecho = set([estado])
         pilha = [estado]
-        
+
+        # Utiliza uma pilha para explorar os estados alcançáveis por transições epsilon
         while pilha:
             atual = pilha.pop()
             for proximo in self.E_transicoes.get(atual, []):
@@ -79,16 +82,19 @@ class AFND:
         Args:
             simbolo (str): O símbolo a ser processado.
         """
-        #print(f"Transitando com o símbolo: {simbolo}")
+        
         novos_ramos = set()
+        # Para cada ramo, encontra os novos ramos possíveis com o símbolo atual
         for ramo in self.ramos:
             if (ramo, simbolo) in self.transicoes:
+                # Se houver transição com o símbolo, adiciona os novos ramos
                 novo = self.transicoes.get((ramo, simbolo), set())
                 novos_ramos.update(novo)
+                # Também adiciona os E-fechos dos novos estados
                 for estado in novo:
                     novos_ramos.update(self.E_fechos.get(estado, set()))
+
         self.ramos = novos_ramos
-        #print(f"Ramos após a transição: {self.ramos}")
 
     def aceita(self) -> bool:
         """Verifica se algum dos ramos atuais é um estado de aceitação.
@@ -96,8 +102,6 @@ class AFND:
         Returns:
             True se algum ramo atual for um estado de aceitação, False caso contrário.
         """
-        #print(f"Verificando aceitação nos ramos: {self.ramos}")
-        #print(f"Estados de aceitação: {self.estados_aceitacao}")
         return any(ramo in self.estados_aceitacao for ramo in self.ramos)
     
     def avaliar_palavra(self, palavra: str) -> bool:
@@ -127,23 +131,31 @@ class AFND:
         Returns:
             dict[str, set[str]]: A tabela de transições epsilon do AFND.
         """
+
+        # Cria uma pilha para armazenar os conjuntos de estados a serem processados
+        # Inicia com o estado inicial e seus E-fechos
         pilha = [{self.estado_inicial}.union(self.E_fechos.get(self.estado_inicial, set()))]
         tabela = {}
         while len(pilha) > 0:
-
+            # Pega o próximo conjunto de estados da pilha
             conjunto = pilha.pop()
             # Torna o conjunto imutável (conjuntos não podem ser chaves de dicionário)
             conjunto = frozenset(conjunto)
+            # Se o conjunto ainda não estiver na tabela, adiciona-o
             if conjunto not in tabela:
                 tabela[conjunto] = set()
+                # Para cada símbolo do alfabeto, calcula o conjunto de estados para que ele transita
                 for simbolo in self.alfabeto:
                     novo_conjunto = set()
                     for estado in conjunto:
                         if (estado, simbolo) in self.transicoes:
                             novo_conjunto.update(self.transicoes[(estado, simbolo)])
+                            # Adiciona os E-fechos dos estados alcançados
                             fechos = [self.E_fechos.get(novo_estado, set()) for novo_estado in self.transicoes[(estado, simbolo)]]
                             novo_conjunto.update(estado_do_fecho for fecho in fechos for estado_do_fecho in fecho)
 
+                    # Se o novo conjunto não estiver vazio, adiciona à tabela
+                    # e à pilha para processamento posterior
                     if novo_conjunto:
                         tabela[conjunto].add((simbolo, frozenset(novo_conjunto)))
                         if frozenset(novo_conjunto) not in tabela:
@@ -157,13 +169,17 @@ class AFND:
             Returns:
                 O AFD resultante da determinização.
         """
-        # Implementação da determinização
         alfabeto = self.alfabeto
+        # Gera a tabela de transições do AFND
         tabela = self.E_tabela()
+        # Cria um mapeamento de conjuntos de estados para estados equivalentes
         equivalentes = {conjunto: f"q{i}" for i, conjunto in enumerate(tabela.keys())}
         estados = set(equivalentes.values())
+
+        # Define o estado inicial e os estados de aceitação do AFD
         estado_inicial = equivalentes[frozenset([self.estado_inicial]).union(self.E_fechos.get(self.estado_inicial, set()))]
         estados_aceitacao = {equivalentes[conjunto] for conjunto in tabela.keys() if any(estado in self.estados_aceitacao for estado in conjunto)}
+        # Cria as transições do AFD a partir da tabela de transições do AFND
         transicoes = {}
         for conjunto, novos_conjuntos in tabela.items():
             estado_atual = equivalentes[conjunto]
@@ -171,6 +187,8 @@ class AFND:
                 if novo_conjunto:
                     estado_proximo = equivalentes[novo_conjunto]
                     transicoes[(estado_atual, simbolo)] = estado_proximo
+        
+        # Retorna o AFD determinizado
         return AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
 
@@ -203,6 +221,7 @@ def main():
 
     # Unindo os dois AFDs
     afnd = AFND.uniao(af1, af2)
+
     # Determinizando o AFND
     determinizado = afnd.determinizar()
     print("AFD Determinizado:")
