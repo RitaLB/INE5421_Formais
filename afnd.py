@@ -118,7 +118,62 @@ class AFND:
         
         # Determina a aceitação da palavra
         return self.aceita()
-    
+
+    def E_tabela(self) -> dict[frozenset[str], set[tuple[str, frozenset[str]]]]:
+        """Gera uma tabela de transições do AFND, mas com conjuntos de estados 
+        (apenas os conjuntos alcançáveis). Essa tabela é útil para determinizar
+        o AFND posteriormente.
+
+        Returns:
+            dict[str, set[str]]: A tabela de transições epsilon do AFND.
+        """
+        pilha = [{self.estado_inicial}.union(self.E_fechos.get(self.estado_inicial, set()))]
+        tabela = {}
+        while len(pilha) > 0:
+
+            conjunto = pilha.pop()
+            # Torna o conjunto imutável (conjuntos não podem ser chaves de dicionário)
+            conjunto = frozenset(conjunto)
+            if conjunto not in tabela:
+                tabela[conjunto] = set()
+                for simbolo in self.alfabeto:
+                    novo_conjunto = set()
+                    for estado in conjunto:
+                        if (estado, simbolo) in self.transicoes:
+                            novo_conjunto.update(self.transicoes[(estado, simbolo)])
+                            fechos = [self.E_fechos.get(novo_estado, set()) for novo_estado in self.transicoes[(estado, simbolo)]]
+                            novo_conjunto.update(estado_do_fecho for fecho in fechos for estado_do_fecho in fecho)
+
+                    if novo_conjunto:
+                        tabela[conjunto].add((simbolo, frozenset(novo_conjunto)))
+                        if frozenset(novo_conjunto) not in tabela:
+                            pilha.append(frozenset(novo_conjunto))
+        
+        return tabela
+
+    def determinizar(self) -> AFD:
+        """Determiniza o AFND, convertendo-o em um AFD.
+
+            Returns:
+                O AFD resultante da determinização.
+        """
+        # Implementação da determinização
+        alfabeto = self.alfabeto
+        tabela = self.E_tabela()
+        equivalentes = {conjunto: f"q{i}" for i, conjunto in enumerate(tabela.keys())}
+        estados = set(equivalentes.values())
+        estado_inicial = equivalentes[frozenset([self.estado_inicial]).union(self.E_fechos.get(self.estado_inicial, set()))]
+        estados_aceitacao = {equivalentes[conjunto] for conjunto in tabela.keys() if any(estado in self.estados_aceitacao for estado in conjunto)}
+        transicoes = {}
+        for conjunto, novos_conjuntos in tabela.items():
+            estado_atual = equivalentes[conjunto]
+            for simbolo, novo_conjunto in novos_conjuntos:
+                if novo_conjunto:
+                    estado_proximo = equivalentes[novo_conjunto]
+                    transicoes[(estado_atual, simbolo)] = estado_proximo
+        return AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+
+
 def main():
     # Definindo AFD em que binário mod 3 = 0
     estados = {'q0', 'q1', 'q2'}
@@ -148,12 +203,22 @@ def main():
 
     # Unindo os dois AFDs
     afnd = AFND.uniao(af1, af2)
+    # Determinizando o AFND
+    determinizado = afnd.determinizar()
+    print("AFD Determinizado:")
+    print(f"Estados: {determinizado.estados}")
+    print(f"Alfabeto: {determinizado.alfabeto}")
+    print(f"Estado Inicial: {determinizado.estado_inicial}")
+    print(f"Estados de Aceitação: {determinizado.estados_aceitacao}")
+    print("Transições:")
+    for (estado, simbolo), proximo_estado in determinizado.transicoes.items():
+        print(f"  {estado} --{simbolo}--> {proximo_estado}")
 
     # Testando o AFND com algumas palavras
-    palavras = ['0', '1', '00', '01', '10', '11', '000', '111', '010', '101', 
+    palavras = ['0', '1', '00', '01', '10', '11', '000', '111', '010', '101',
                 '110', '1111', '0000', '0011', '1100', '1110', '1010', '1001']
     for palavra in palavras:
-        resultado = afnd.avaliar_palavra(palavra)
+        resultado = determinizado.avaliar_palavra(palavra)
         print(f"A palavra '{palavra}' é aceita pelo AFND? {"Sim" if resultado else "Não"}")
 
 if __name__ == "__main__":
