@@ -59,6 +59,21 @@ class AFD:
         
         # Determina a aceitação da palavra
         return self.aceita()
+    
+    def escrever_arquivo(self):
+        """Escreve a definição do AFD em um arquivo de texto."""
+        with open('afd.txt', 'w') as f:
+            # Imprime número de estados
+            f.write(f"{len(self.estados)}\n")
+            # Imprime estado inicial
+            f.write(f"{self.estado_inicial}\n")
+            # Imprime estados de aceitação
+            f.write(f"{','.join(self.estados_aceitacao)}\n")
+            # Imprime alfabeto
+            f.write(f"{','.join(self.alfabeto)}\n")
+            # Imprime transições
+            for (estado, simbolo), novo_estado in self.transicoes.items():
+                f.write(f"{estado},{simbolo},{novo_estado}\n")
 
 # Exemplo de uso da classe AFD (para rodar: python3 afd.py)
 def main():
@@ -76,11 +91,14 @@ def main():
     # Criando o AFD
     afd = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
-    # Testando o AFD com algumas palavras
-    palavras = ['ab', 'a', 'b', 'aab', 'abb','abaab']
-    for palavra in palavras:
-        resultado = afd.avaliar_palavra(palavra)
-        print(f"A palavra '{palavra}' é aceita? {"Sim" if resultado else "Não"}")
+    # # Testando o AFD com algumas palavras
+    # palavras = ['ab', 'a', 'b', 'aab', 'abb','abaab']
+    # for palavra in palavras:
+    #     resultado = afd.avaliar_palavra(palavra)
+    #     print(f"A palavra '{palavra}' é aceita? {"Sim" if resultado else "Não"}")
+
+    afd.escrever_arquivo()
+    print("Definição do AFD escrita no arquivo 'afd.txt'.")
 
 if __name__ == "__main__":
     main()

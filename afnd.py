@@ -234,11 +234,14 @@ def main():
         print(f"  {estado} --{simbolo}--> {proximo_estado}")
 
     # Testando o AFND com algumas palavras
-    palavras = ['0', '1', '00', '01', '10', '11', '000', '111', '010', '101',
-                '110', '1111', '0000', '0011', '1100', '1110', '1010', '1001']
-    for palavra in palavras:
-        resultado = determinizado.avaliar_palavra(palavra)
-        print(f"A palavra '{palavra}' é aceita pelo AFND? {"Sim" if resultado else "Não"}")
+    # palavras = ['0', '1', '00', '01', '10', '11', '000', '111', '010', '101',
+    #             '110', '1111', '0000', '0011', '1100', '1110', '1010', '1001']
+    # for palavra in palavras:
+    #     resultado = determinizado.avaliar_palavra(palavra)
+    #     print(f"A palavra '{palavra}' é aceita pelo AFND? {"Sim" if resultado else "Não"}")
+
+    determinizado.escrever_arquivo()
+    print("Definição do AFD determinizado escrita no arquivo 'afd.txt'.")
 
 if __name__ == "__main__":
     main()
