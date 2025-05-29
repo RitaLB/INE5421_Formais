@@ -1,17 +1,19 @@
 class AFD:
     """Classe que representa um Autômato Finito Determinístico (AFD)."""
 
-    def __init__(self, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str]):
+    def __init__(self, nome:str, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str]):
         """Inicializa o AFD com os estados, alfabeto, transições, estado inicial
            e estados de aceitação.
         
             Args:
+                nome (str): Nome do AFD (importante para identificação).
                 estados (set[str]): Conjunto de estados do AFD.
                 alfabeto (set[str]): Conjunto de símbolos do alfabeto do AFD.
                 transicoes (dict[tuple[str, str], str]): Dicionário que mapeia tuplas (estado, símbolo) para o próximo estado.
                 estado_inicial (str): Estado inicial do AFD.
                 estados_aceitacao (set[str]): Conjunto de estados de aceitação do AFD.
         """
+        self.nome = nome
         self.estados = estados
         self.alfabeto = alfabeto
         self.transicoes = transicoes
@@ -62,7 +64,7 @@ class AFD:
     
     def escrever_arquivo(self):
         """Escreve a definição do AFD em um arquivo de texto."""
-        with open('afd.txt', 'w') as f:
+        with open(f"{self.nome}.txt", 'w') as f:
             # Imprime número de estados
             f.write(f"{len(self.estados)}\n")
             # Imprime estado inicial
@@ -89,7 +91,7 @@ def main():
     estados_aceitacao = {'q2'}
 
     # Criando o AFD
-    afd = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+    afd = AFD("meu_afd", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
     # # Testando o AFD com algumas palavras
     # palavras = ['ab', 'a', 'b', 'aab', 'abb','abaab']
@@ -98,7 +100,7 @@ def main():
     #     print(f"A palavra '{palavra}' é aceita? {"Sim" if resultado else "Não"}")
 
     afd.escrever_arquivo()
-    print("Definição do AFD escrita no arquivo 'afd.txt'.")
+    print(f"Definição do AFD escrita no arquivo '{afd.nome}.txt'.")
 
 if __name__ == "__main__":
     main()

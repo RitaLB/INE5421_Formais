@@ -1,17 +1,19 @@
 from afd import AFD
 
 class AFND:
-    def __init__(self, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str]):
+    def __init__(self, nome: str, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str]):
         """Inicializa o AFD com os estados, alfabeto, transições, estado inicial
         e estados de aceitação.
             
         Args:
+            nome (str): Nome do AFND (importante para identificação).
             estados (set[str]): Conjunto de estados do AFD.
             alfabeto (set[str]): Conjunto de símbolos do alfabeto do AFD.
             transicoes (dict[tuple[str, str], str]): Dicionário que mapeia tuplas (estado, símbolo) para o próximo estado.
             estado_inicial (str): Estado inicial do AFD.
             estados_aceitacao (set[str]): Conjunto de estados de aceitação do AFD.
         """
+        self.nome = nome
         self.estados = estados
         self.alfabeto = alfabeto
         self.transicoes = transicoes
@@ -45,7 +47,7 @@ class AFND:
         transicoes[(estado_inicial, '&')] = {f"{af1.estado_inicial}_1", f"{af2.estado_inicial}_2"}
 
         # Retorna o novo AFND
-        return cls(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+        return cls("Unido", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
     
     def resetar(self) -> None:
         """Reseta os ramos do AFND para o estado inicial (e seu E-fecho)."""
@@ -189,7 +191,7 @@ class AFND:
                     transicoes[(estado_atual, simbolo)] = estado_proximo
         
         # Retorna o AFD determinizado
-        return AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+        return AFD(f"{self.nome}_determinizado", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
 
 def main():
@@ -205,7 +207,7 @@ def main():
                   ('q2', '0'): 'q1',
                   ('q2', '1'): 'q2'
     }
-    af1 = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+    af1 = AFD("af1", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
     # Definind AFD que aceita binários pares
     estados = {'q0', 'q1'}
@@ -217,7 +219,7 @@ def main():
                   ('q1', '0'): 'q0',
                   ('q1', '1'): 'q1'
     }
-    af2 = AFD(estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+    af2 = AFD("af2", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
     # Unindo os dois AFDs
     afnd = AFND.uniao(af1, af2)
@@ -241,7 +243,7 @@ def main():
     #     print(f"A palavra '{palavra}' é aceita pelo AFND? {"Sim" if resultado else "Não"}")
 
     determinizado.escrever_arquivo()
-    print("Definição do AFD determinizado escrita no arquivo 'afd.txt'.")
+    print(f"Definição do AFD determinizado escrita no arquivo '{determinizado.nome}.txt'.")
 
 if __name__ == "__main__":
     main()
