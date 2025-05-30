@@ -24,31 +24,43 @@ class AFND:
         self.resetar()
     
     @classmethod
-    def uniao(cls, af1: AFD, af2: AFD) -> 'AFND':
-        """Cria um AFND que representa a união de dois AFDs.
+    def uniao(cls, automatos: list[AFD]):
+        """Cria um AFND que representa a união de múltiplos (2 ou +) AFDs.
+           Estados são renomeados para evitar conflitos, e um novo estado 
+           inicial é criado que transita por ε para os estados iniciais 
+           de cada AFD.
         
         Args:
-            af1 (AFD): Primeiro AFD.
-            af2 (AFD): Segundo AFD.
-        
+            automatos (list[AFD]): Lista de AFDs a serem unidos.
+            
         Returns:
-            AFND: Um novo AFND representando a união dos dois AFDs.
+            Um novo AFND representando a união dos dois AFDs.
         """
         # União dos estados, alfabeto, transiçõesestados de aceitação (com ajustes no nome dos estados, para evitar conflitos)
-        estados: set[str] = {f"{estado}_1" for estado in af1.estados}|({f"{estado}_2" for estado in af2.estados})
-        alfabeto: set[str] = af1.alfabeto.union(af2.alfabeto)
-        estados_aceitacao: set[str] = {f"{estado}_1" for estado in af1.estados_aceitacao}|{f"{estado}_2" for estado in af2.estados_aceitacao}
-        transicoes: dict[tuple[str, str], set[str]] = {(f"{estado}_1", simbolo): set([f"{novo_estado}_1"]) for (estado, simbolo), novo_estado in af1.transicoes.items()}
-        transicoes.update({(f"{estado}_2", simbolo): set([f"{novo_estado}_2"]) for (estado, simbolo), novo_estado in af2.transicoes.items()})
+        estados: set[str] = set()
+        alfabeto: set[str] = set()
+        estados_aceitacao: set[str] = set()
+        transicoes: dict[tuple[str, str], set[str]] = {}
 
-        # Adiciona um novo estado inicial, que vai para os antigos iniciais com transições epsilon
-        estados.add('s')
-        estado_inicial = 's'
-        transicoes[(estado_inicial, '&')] = {f"{af1.estado_inicial}_1", f"{af2.estado_inicial}_2"}
 
-        # Retorna o novo AFND
-        return cls("Unido", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
-    
+        # Estado inicial do novo AFND (transita por ε para os estados iniciais de cada AFD)
+        estado_inicial = 'S'
+        estados.add(estado_inicial)
+        transicoes[(estado_inicial, '&')] = set()
+        for af in automatos:
+            # Cria um prefixo único para cada AFD para evitar conflitos de nomes
+            prefixo = f"{af.nome}_"
+            # Une estados, alfabeto, transições e estados de aceitação de cada AFD
+            estados.update(f"{prefixo}{estado}" for estado in af.estados)
+            alfabeto.update(af.alfabeto)
+            estados_aceitacao.update(f"{prefixo}{estado}" for estado in af.estados_aceitacao)
+            transicoes.update({(f"{prefixo}{estado}", simbolo): {f"{prefixo}{proximo_estado}"}
+                               for (estado, simbolo), proximo_estado in af.transicoes.items()})
+            # Adiciona transições epsilon do estado inicial do novo AFND para o antigo inicial de cada AFD
+            transicoes[(estado_inicial, '&')].add(f"{prefixo}{af.estado_inicial}")
+
+        return cls("união", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+        
     def resetar(self) -> None:
         """Reseta os ramos do AFND para o estado inicial (e seu E-fecho)."""
         self.ramos = set([self.estado_inicial])
@@ -195,55 +207,73 @@ class AFND:
 
 
 def main():
-    # Definindo AFD em que binário mod 3 = 0
-    estados = {'q0', 'q1', 'q2'}
-    alfabeto = {'0', '1'}
-    estado_inicial = 'q0'
-    estados_aceitacao = {'q0'}
-    transicoes = {('q0', '0'): 'q0',
-                  ('q0', '1'): 'q1',
-                  ('q1', '0'): 'q2',
-                  ('q1', '1'): 'q0',
-                  ('q2', '0'): 'q1',
-                  ('q2', '1'): 'q2'
-    }
-    af1 = AFD("af1", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
-
-    # Definind AFD que aceita binários pares
-    estados = {'q0', 'q1'}
-    alfabeto = {'0', '1'}
-    estado_inicial = 'q0'
-    estados_aceitacao = {'q0'}
-    transicoes = {('q0', '0'): 'q0',
-                  ('q0', '1'): 'q1',
-                  ('q1', '0'): 'q0',
-                  ('q1', '1'): 'q1'
-    }
-    af2 = AFD("af2", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
-
-    # Unindo os dois AFDs
-    afnd = AFND.uniao(af1, af2)
-
+    # Definindo AFD que aceita palavras terminadas em 'a'
+    afd1 = AFD(
+        nome="afd1",
+        estados={"q0", "q1"},
+        alfabeto={"a", "b", "c", "d"},
+        transicoes={
+            ("q0", "a"): "q1",
+            ("q0", "b"): "q0",
+            ("q0", "c"): "q0",
+            ("q0", "d"): "q0",
+            ("q1", "a"): "q1",
+            ("q1", "b"): "q0",
+            ("q1", "c"): "q0",
+            ("q1", "d"): "q0"
+        },
+        estado_inicial="q0",
+        estados_aceitacao={"q1"}
+    )
+    # Definindo AFD que aceita palavras terminadas em 'b'
+    afd2 = AFD(
+        nome="afd2",
+        estados={"q0", "q1"},
+        alfabeto={"a", "b", "c", "d"},
+        transicoes={
+            ("q0", "a"): "q0",
+            ("q0", "b"): "q1",
+            ("q0", "c"): "q0",
+            ("q0", "d"): "q0",
+            ("q1", "a"): "q0",
+            ("q1", "b"): "q1",
+            ("q1", "c"): "q0",
+            ("q1", "d"): "q0"
+        },
+        estado_inicial="q0",
+        estados_aceitacao={"q1"}
+    )
+    # Definindo AFD que aceita palavras terminadas em 'c'
+    afd3 = AFD(
+        nome="afd3",
+        estados={"q0", "q1"},
+        alfabeto={"a", "b", "c", "d"},
+        transicoes={
+            ("q0", "a"): "q0",
+            ("q0", "b"): "q0",
+            ("q0", "c"): "q1",
+            ("q0", "d"): "q0",
+            ("q1", "a"): "q0",
+            ("q1", "b"): "q0",
+            ("q1", "c"): "q1",
+            ("q1", "d"): "q0"
+        },
+        estado_inicial="q0",
+        estados_aceitacao={"q1"}
+    )
+    # Criando AFND que aceita a união dos três AFDs
+    afnd = AFND.uniao([afd1, afd2, afd3])
     # Determinizando o AFND
-    determinizado = afnd.determinizar()
-    print("AFD Determinizado:")
-    print(f"Estados: {determinizado.estados}")
-    print(f"Alfabeto: {determinizado.alfabeto}")
-    print(f"Estado Inicial: {determinizado.estado_inicial}")
-    print(f"Estados de Aceitação: {determinizado.estados_aceitacao}")
-    print("Transições:")
-    for (estado, simbolo), proximo_estado in determinizado.transicoes.items():
-        print(f"  {estado} --{simbolo}--> {proximo_estado}")
-
-    # Testando o AFND com algumas palavras
-    # palavras = ['0', '1', '00', '01', '10', '11', '000', '111', '010', '101',
-    #             '110', '1111', '0000', '0011', '1100', '1110', '1010', '1001']
-    # for palavra in palavras:
-    #     resultado = determinizado.avaliar_palavra(palavra)
-    #     print(f"A palavra '{palavra}' é aceita pelo AFND? {"Sim" if resultado else "Não"}")
-
-    determinizado.escrever_arquivo()
-    print(f"Definição do AFD determinizado escrita no arquivo '{determinizado.nome}.txt'.")
+    afd_determinizado = afnd.determinizar()
+    # Testando o AFD determinizado com algumas palavras
+    palavras = ["a", "b", "c", "ab", "ac", "bc", "abc", "abcd", "aab", "bbd"]
+    for palavra in palavras:
+        resultado = afd_determinizado.avaliar_palavra(palavra)
+        print(f"A palavra '{palavra}' é aceita pelo AFD determinizado: {resultado}")
+    
+    # Escreve arquivo do AFD determinizado
+    afd_determinizado.escrever_arquivo()
+    print(f"AFD determinizado '{afd_determinizado.nome}' escrito no arquivo.")
 
 if __name__ == "__main__":
     main()
