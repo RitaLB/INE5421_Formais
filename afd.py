@@ -1,7 +1,7 @@
 class AFD:
     """Classe que representa um Autômato Finito Determinístico (AFD)."""
 
-    def __init__(self, nome:str, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str]):
+    def __init__(self, nome:str, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str], mapeamento: dict[str, str] = None):
         """Inicializa o AFD com os estados, alfabeto, transições, estado inicial
            e estados de aceitação.
         
@@ -12,6 +12,7 @@ class AFD:
                 transicoes (dict[tuple[str, str], str]): Dicionário que mapeia tuplas (estado, símbolo) para o próximo estado.
                 estado_inicial (str): Estado inicial do AFD.
                 estados_aceitacao (set[str]): Conjunto de estados de aceitação do AFD.
+                mapeamento (dict[str, str], opcional): Mapeamento de estados de aceitação para identificadores (se None, usa o nome do AFD).
         """
         self.nome = nome
         self.estados = estados
@@ -20,6 +21,8 @@ class AFD:
         self.estado_inicial = estado_inicial
         self.estados_aceitacao = estados_aceitacao
         self.estado_atual = estado_inicial
+        self.mapeamento = mapeamento if mapeamento is not None else {nome: estados_aceitacao}
+        
     
     def resetar(self) -> None:
         """Reseta o estado atual do AFD para o estado inicial."""
@@ -43,14 +46,15 @@ class AFD:
         """
         return self.estado_atual in self.estados_aceitacao
     
-    def avaliar_palavra(self, palavra: str) -> bool:
+    def avaliar_palavra(self, palavra: str) -> tuple[bool, str]:
         """Avalia uma palavra no AFD, processando cada símbolo e verificando se a palavra é aceita.
+        Se for aceita, também retorna o identificador do estado de aceitação.
         
         Args:
             palavra (str): A palavra a ser avaliada.
-        
+
         Returns:
-            True se a palavra for aceita pelo AFD, False caso contrário.
+            (bool, str): Uma tupla contendo um booleano que indica se a palavra é aceita e o identificador do estado de aceitação (ou None se não for aceita).
         """
         # Reseta o estado atual para o estado inicial
         self.resetar()
@@ -60,7 +64,13 @@ class AFD:
             self.transitar(simbolo)
         
         # Determina a aceitação da palavra
-        return self.aceita()
+        if self.aceita():
+            # Procura o identificador do estado de aceitação
+            for identificador, estados in self.mapeamento.items():
+                if self.estado_atual in estados:
+                    return True, identificador
+                
+        return False, None
     
     def escrever_arquivo(self):
         """Escreve a definição do AFD em um arquivo de texto."""
@@ -93,11 +103,13 @@ def main():
     # Criando o AFD
     afd = AFD("meu_afd", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
 
-    # # Testando o AFD com algumas palavras
-    # palavras = ['ab', 'a', 'b', 'aab', 'abb','abaab']
-    # for palavra in palavras:
-    #     resultado = afd.avaliar_palavra(palavra)
-    #     print(f"A palavra '{palavra}' é aceita? {"Sim" if resultado else "Não"}")
+    # Testando o AFD com algumas palavras
+    palavras = ['ab', 'a', 'b', 'aab', 'abb','abaab']
+    for palavra in palavras:
+        resultado = afd.avaliar_palavra(palavra)
+        print(f"A palavra '{palavra}' é aceita? {"Sim" if resultado[0] else "Não"}")
+        if resultado[0]:
+            print(f"Identificador do estado de aceitação: {resultado[1]}")
 
     afd.escrever_arquivo()
     print(f"Definição do AFD escrita no arquivo '{afd.nome}.txt'.")

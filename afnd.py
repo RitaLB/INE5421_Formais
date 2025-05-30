@@ -1,7 +1,7 @@
 from afd import AFD
 
 class AFND:
-    def __init__(self, nome: str, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str]):
+    def __init__(self, nome: str, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str], mapeamento: dict[str, set[str]] = None):
         """Inicializa o AFD com os estados, alfabeto, transições, estado inicial
         e estados de aceitação.
             
@@ -12,6 +12,7 @@ class AFND:
             transicoes (dict[tuple[str, str], str]): Dicionário que mapeia tuplas (estado, símbolo) para o próximo estado.
             estado_inicial (str): Estado inicial do AFD.
             estados_aceitacao (set[str]): Conjunto de estados de aceitação do AFD.
+            mapeamento (dict[str, str], opcional): Mapeamento de estados de aceitação para identificadores (se None, usa o nome do AFND).
         """
         self.nome = nome
         self.estados = estados
@@ -21,6 +22,7 @@ class AFND:
         self.E_fechos = {estado: self.E_fecho(estado) for estado in estados}
         self.estado_inicial = estado_inicial
         self.estados_aceitacao = estados_aceitacao
+        self.mapeamento = mapeamento if mapeamento is not None else {nome: estados_aceitacao}
         self.resetar()
     
     @classmethod
@@ -41,6 +43,7 @@ class AFND:
         alfabeto: set[str] = set()
         estados_aceitacao: set[str] = set()
         transicoes: dict[tuple[str, str], set[str]] = {}
+        mapeamento: dict[str, str] = {} # Mapeamento de estados de aceitação para identificadores (nome dos AFDs)
 
 
         # Estado inicial do novo AFND (transita por ε para os estados iniciais de cada AFD)
@@ -48,6 +51,7 @@ class AFND:
         estados.add(estado_inicial)
         transicoes[(estado_inicial, '&')] = set()
         for af in automatos:
+            print(f"Mapeamento de {af.nome}: {af.mapeamento}")
             # Cria um prefixo único para cada AFD para evitar conflitos de nomes
             prefixo = f"{af.nome}_"
             # Une estados, alfabeto, transições e estados de aceitação de cada AFD
@@ -58,9 +62,11 @@ class AFND:
                                for (estado, simbolo), proximo_estado in af.transicoes.items()})
             # Adiciona transições epsilon do estado inicial do novo AFND para o antigo inicial de cada AFD
             transicoes[(estado_inicial, '&')].add(f"{prefixo}{af.estado_inicial}")
+            # Mapeia os estados de aceitação para seus identificadores (AFDs antigos)
+            mapeamento.update({af.nome: {f"{prefixo}{estado}" for estado in af.estados_aceitacao}})
 
-        return cls("união", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
-        
+        return cls("união", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao, mapeamento)
+
     def resetar(self) -> None:
         """Reseta os ramos do AFND para o estado inicial (e seu E-fecho)."""
         self.ramos = set([self.estado_inicial])
@@ -116,7 +122,10 @@ class AFND:
         Returns:
             True se algum ramo atual for um estado de aceitação, False caso contrário.
         """
-        return any(ramo in self.estados_aceitacao for ramo in self.ramos)
+        for identificador, estados in self.mapeamento.items():
+            if any(estado in estados for estado in self.ramos):
+                return True, identificador
+        return False, None
     
     def avaliar_palavra(self, palavra: str) -> bool:
         """Avalia uma palavra no AFND, processando cada símbolo e verificando se a palavra é aceita.
@@ -201,9 +210,13 @@ class AFND:
                 if novo_conjunto:
                     estado_proximo = equivalentes[novo_conjunto]
                     transicoes[(estado_atual, simbolo)] = estado_proximo
-        
+        mapeamento = {nome: set() for nome in self.mapeamento.keys()}
+        for conjunto, novo_estado in equivalentes.items():
+            for identificador, estados in self.mapeamento.items():
+                if any(estado in conjunto for estado in estados):
+                    mapeamento[identificador].add(novo_estado)
         # Retorna o AFD determinizado
-        return AFD(f"{self.nome}_determinizado", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao)
+        return AFD(f"{self.nome}_determinizado", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao, mapeamento)
 
 
 def main():
@@ -263,17 +276,30 @@ def main():
     )
     # Criando AFND que aceita a união dos três AFDs
     afnd = AFND.uniao([afd1, afd2, afd3])
+
+    # Testando o AFND com algumas palavras
+    # palavras = ["a", "b", "c", "ab", "ac", "bc", "abc", "abcd", "aab", "bbd"]
+    # for palavra in palavras:
+    #     resultado = afnd.avaliar_palavra(palavra)
+    #     print(f"A palavra '{palavra}' é aceita pelo AFND: {resultado[0]}")
+    #     if resultado[0]:
+    #         print(f"Identificador: {resultado[1]}")
     # Determinizando o AFND
     afd_determinizado = afnd.determinizar()
     # Testando o AFD determinizado com algumas palavras
+    print("Mapeamento de estados de aceitação:")
+    for identificador, estados in afd_determinizado.mapeamento.items():
+        print(f"{identificador}: {', '.join(estados)}")
     palavras = ["a", "b", "c", "ab", "ac", "bc", "abc", "abcd", "aab", "bbd"]
     for palavra in palavras:
         resultado = afd_determinizado.avaliar_palavra(palavra)
-        print(f"A palavra '{palavra}' é aceita pelo AFD determinizado: {resultado}")
+        print(f"A palavra '{palavra}' é aceita pelo AFD determinizado: {resultado[0]}")
+        if resultado[0]:
+            print(f"Identificador do estado de aceitação: {resultado[1]}")
     
-    # Escreve arquivo do AFD determinizado
-    afd_determinizado.escrever_arquivo()
-    print(f"AFD determinizado '{afd_determinizado.nome}' escrito no arquivo.")
+    # # Escreve arquivo do AFD determinizado
+    # afd_determinizado.escrever_arquivo()
+    # print(f"AFD determinizado '{afd_determinizado.nome}' escrito no arquivo.")
 
 if __name__ == "__main__":
     main()
