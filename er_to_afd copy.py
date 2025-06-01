@@ -51,27 +51,9 @@ class Tree(ABC):
 
     @staticmethod
     def create_tree(er: str) -> Node:
-        '''
-        er = er + '#'  # Adiciona o símbolo de fim de palavra
-        er = Tree.inserir_concatenacao(er)
-        er_list = list(er)
-        stack = []
-        pos = 1
-        position = len(er_list)
-        tree = ConcatenationNode(None, None)
-        stack.append(tree)
-
-        for c in reversed(er_list):
-            if c.isalnum() or c == '#':
-                tree = 
-            if c == ".":
-            
-        '''
-
         er = er + '#'  # Adiciona o símbolo de fim de palavra
         er = Tree.inserir_concatenacao(er)
         postfix = Tree.to_postfix(er)
-        print("postfix =", postfix)
         stack = []
         pos = 1
         for c in postfix:
@@ -115,18 +97,14 @@ class Tree(ABC):
             na expressão regular.
             Exemplo: "ab" -> "a.b"
         """
-
-        print("ER = ", er)
         resultado = ""
-        operadores = {'|', '*', '+', ')', '?'}
+        operadores = {'|', '*', '+', ')'}
         for i in range(len(er)):
             resultado += er[i]
             if i + 1 < len(er):
                 a, b = er[i], er[i+1]
-                if (a not in '(|' and b not in '|)*+.)?'):
+                if (a not in '(|' and b not in '|)*+.)'):
                     resultado += '.'
-        
-        print("ER com concatenação explícita = ", resultado)
         return resultado
     
     @staticmethod
@@ -356,15 +334,15 @@ def create_afd(tree: Node) -> AFD:
     pos_to_symbol = {}
     def mapear_folhas(node):
         if isinstance(node, LeafNode):
-            #print("leaf_node", node.value)
+            print("leaf_node", node.value)
             pos_to_symbol[node.position] = node.value
         elif hasattr(node, 'left'):
-            #print("left")
+            print("left")
             mapear_folhas(node.left)
             if hasattr(node, 'right'):
                 mapear_folhas(node.right)
         elif hasattr(node, 'child'):
-            #print('child')
+            print('child')
             mapear_folhas(node.child)
 
     mapear_folhas(tree)
