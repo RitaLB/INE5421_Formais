@@ -8,9 +8,21 @@ Para mais informações sobre o modelo de entradas e fluxo de execução, veja o
 
 Estando na pasta do repositório, rode o arquivo main, informando o caminho para o arquivo onde estão contidas as Expressões Regulares e para o arquivo contendo o texto fonte a ser analisado.
 
-```cmd
+```sh
 python3 main.py caminho/para/ers.txt caminho/para/texto-fonte.txt
 ```
+## Arquivos de Teste
+
+Vários arquivos de teste se encontram na pasta 'testes' do diretório. Use-os para demonstrar a execução do projeto.
+
+## Limpando o Diretório
+
+Caso a quantidade de saídas fique muito poluída, você pode executar o arquivo limpador.py para limpar o diretório.
+Sua execução retira todos os arquivos da pasta de autômatos e tabelas, e deleta o arquivo de tokens de saída (você precisa estar na pasta principal do projeto).
+```sh
+python3 limpador.py
+```
+
 
 ## Estrutura do projeto
 - afd.py: define a classe para Autômatos Finitos Determinísticos (AFDs)
@@ -19,3 +31,4 @@ python3 main.py caminho/para/ers.txt caminho/para/texto-fonte.txt
 - main.py: arquivo de execução principal (executa a aplicação)
 - parser.py: define a classe Parser (classe que lê ERS do arquivo de entrada e expande seus intervalos)
 - tree.py: define as classes Tree, Node e filhos de Node (implementam uma análise léxica)
+- limpador.py: define a classe Limpador, que retira os arquivos saídas do diretório
