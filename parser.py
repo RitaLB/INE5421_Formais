@@ -118,5 +118,6 @@ class Parser(ABC):
 # teste
 if __name__ == "__main__":
     er_dict = Parser.process_er_file("entrada.txt")
+    er_dict = Parser.process_er_file("entrada.txt")
     for name, expr in er_dict.items():
         print(f"{name}: {expr}")

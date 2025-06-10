@@ -2,47 +2,13 @@
 Funcões para transformar expressões regulares em autômatos finitos determinísticos (AFDs)
 '''
 
-from typing import Set, Dict
+from typing import Set, Dict, Tuple
 from abc import ABC
+from afd import AFD  # Importa a classe AFD definida em afd.py
+from parser import Parser  # Importa a classe Parser definida em parser.py
 # Passo 1: transformar a expressão regular em uma árvore binária
 
 
-# Criação dos nodes da árvore binária, um para cada tipo de nodo (pois têm regras de lastpos e firstpos diferentes)
-class Node:
-    """
-    Classe base para os nodos da árvore binária.
-    """
-    def __init__(self, value):
-        self.left = None
-        self.right = None
-        self.value = value
-
-    @property
-    def is_nullable(self):
-        """
-        Verifica se o nodo é nulo.
-        """
-        pass
-    
-    @property
-    def last_pos(self):
-        """
-        Retorna o conjunto lastpos do nodo.
-        """
-        pass
-
-    @property
-    def first_pos(self):
-        """
-        Retorna o conjunto firstpos do nodo.
-        """
-        pass
-
-    def follow_pos(self):
-        """
-        Retorna o conjunto followpos do nodo.
-        """
-        pass
 # Criação dos nodes da árvore binária, um para cada tipo de nodo (pois têm regras de lastpos e firstpos diferentes)
 class Node:
     """
@@ -85,32 +51,13 @@ class Tree(ABC):
 
     @staticmethod
     def create_tree(er: str) -> Node:
-        '''
         er = er + '#'  # Adiciona o símbolo de fim de palavra
         er = Tree.inserir_concatenacao(er)
-        er_list = list(er)
-        stack = []
-        pos = 1
-        position = len(er_list)
-        tree = ConcatenationNode(None, None)
-        stack.append(tree)
-
-        for c in reversed(er_list):
-            if c.isalnum() or c == '#':
-                tree = 
-            if c == ".":
-            
-        '''
-
-        er = '(' + er + ')' + '#'  # Adiciona o símbolo de fim de palavra
-        er = Tree.inserir_concatenacao(er)
         postfix = Tree.to_postfix(er)
-        print("postfix =", postfix)
         stack = []
         pos = 1
-        operadores = set('*+.|?')  # Conjunto de operadores válidos
         for c in postfix:
-            if c not in operadores:
+            if c.isalnum() or c == '#':
                 stack.append(LeafNode(c, pos))
                 pos += 1
             elif c == '*':
@@ -127,10 +74,6 @@ class Tree(ABC):
                 right = stack.pop()
                 left = stack.pop()
                 stack.append(OrNode(left, right))
-            elif c == '?':
-                child = stack.pop()
-                child.question_mark = True  # Marca o nodo como opcional
-                stack.append(child)
         return stack[0]
 
 
@@ -154,16 +97,14 @@ class Tree(ABC):
             na expressão regular.
             Exemplo: "ab" -> "a.b"
         """
-
         resultado = ""
+        operadores = {'|', '*', '+', ')'}
         for i in range(len(er)):
             resultado += er[i]
             if i + 1 < len(er):
                 a, b = er[i], er[i+1]
-                if (a not in '(|' and b not in '|)*+.)?'):
-                if (a not in '(|' and b not in '|)*+.)?'):
+                if (a not in '(|' and b not in '|)*+.)'):
                     resultado += '.'
-        
         return resultado
     
     @staticmethod
@@ -173,12 +114,11 @@ class Tree(ABC):
         Converte uma expressão regular em notação infixa para notação pós-fixa (RPN).
         Utiliza o algoritmo de Shunting Yard.
         """
-        precedencia = {'?': 3, '*': 3, '+': 3, '.': 2, '|': 1}
+        precedencia = {'*': 3, '+': 3, '.': 2, '|': 1}
         output = []
         stack = []
-        operadores = set(precedencia.keys())
         for c in er:
-            if c not in operadores and c != '(' and c != ')':
+            if c.isalnum() or c == '#':
                 output.append(c)
             elif c == '(':
                 stack.append(c)
@@ -194,6 +134,9 @@ class Tree(ABC):
             output.append(stack.pop())
         return ''.join(output)
 
+
+
+
 class ConcatenationNode(Node):
     """
     Nodo de concatenação.
@@ -203,11 +146,10 @@ class ConcatenationNode(Node):
         self.left = left
         self.right = right
         self.null = nullable
-        self.question_mark = False  # Para indicar se é opcional (usado em ERs como a? ou b?)
     
     @property
     def is_nullable(self):
-        return (self.left.is_nullable and self.right.is_nullable) or self.question_mark
+        return (self.left.is_nullable and self.right.is_nullable) or self.null
     
     @property
     def last_pos(self):
@@ -255,11 +197,10 @@ class OrNode(Node):
         # super().__init__('or') ?
         self.left = left
         self.right = right
-        self.question_mark = False  # Para indicar se é opcional (usado em ERs como a? ou b?)
     
     @property
     def is_nullable(self):
-        return self.left.is_nullable or self.right.is_nullable or self.question_mark
+        return self.left.is_nullable or self.right.is_nullable# Conferir
     
     @property
     def last_pos(self):
@@ -285,7 +226,6 @@ class StarNode(Node):
     def __init__(self, child: Node):
         # super().__init__('star') ?
         self.child = child
-        self.question_mark = False  # Para indicar se é opcional (usado em ERs como a? ou b?)
     
     @property
     def is_nullable(self):
@@ -324,11 +264,10 @@ class PlusNode(Node):
     def __init__(self, child: Node):
         # super().__init__('plus') ?
         self.child = child
-        self.question_mark = False  # Para indicar se é opcional (usado em ERs como a? ou b?)
     
     @property
     def is_nullable(self):
-        return self.question_mark # Conferir
+        return False # Conferir
     
     @property
     def last_pos(self):
@@ -362,26 +301,135 @@ class LeafNode(Node):
     Nodo folha (caractere).
     """
     def __init__(self, value, position, nullable=False):
-    def __init__(self, value, position, nullable=False):
         # super().__init__(value) ?
         self.value = value
         self.null = nullable
         self.position = position
-        self.question_mark = False
-
     @property
     def is_nullable(self):
-        return self.question_mark
+        return self.null
     
     @property
     def last_pos(self):
-        return {self.position}
+        return {self.value}
 
     @property
     def first_pos(self):
-        return {self.position}
+        return {self.value}
 
     def follow_pos(self):
-        return {}   
+        return {}
+    
 
 # Passo 2: transformar a árvore binária em um autômato finito determinístico (AFD)
+def create_afd(tree: Node) -> AFD:
+    """
+    Cria um autômato finito determinístico (AFD) a partir de uma árvore binária.
+    """
+    # Implementação do AFD
+    from collections import deque
+
+    print("create _ afd")
+    # 1. Mapeia cada posição para seu símbolo
+    pos_to_symbol = {}
+    def mapear_folhas(node):
+        if isinstance(node, LeafNode):
+            print("leaf_node", node.value)
+            pos_to_symbol[node.position] = node.value
+        elif hasattr(node, 'left'):
+            print("left")
+            mapear_folhas(node.left)
+            if hasattr(node, 'right'):
+                mapear_folhas(node.right)
+        elif hasattr(node, 'child'):
+            print('child')
+            mapear_folhas(node.child)
+
+    mapear_folhas(tree)
+
+    # 2. Obter follow_pos, first_pos, last_pos
+    follow_pos = tree.follow_pos()
+    first_pos = tree.first_pos
+    last_pos = tree.last_pos
+
+    # 3. Inicializações
+    estado_inicial = frozenset(first_pos)
+    estados = {estado_inicial}
+    fila = deque([estado_inicial])
+    transicoes = {}
+    alfabeto = set(pos_to_symbol.values()) - {'#'}  # remove '#' (fim da palavra)
+    estados_aceitacao = set()
+    nome = "afd_da_er"
+
+    # 4. Mapeamento de conjuntos de posições para nomes de estado (opcional: para salvar nomes bonitos)
+    nome_estados = {estado_inicial: "S0"}
+    contador_nome = 1
+
+    while fila:
+        estado = fila.popleft()
+        for simbolo in alfabeto:
+            destinos = set()
+            for pos in estado:
+                if pos_to_symbol[pos] == simbolo:
+                    destinos.update(follow_pos.get(pos, set()))
+            if destinos:
+                destino_fset = frozenset(destinos)
+                if destino_fset not in nome_estados:
+                    nome_estados[destino_fset] = f"S{contador_nome}"
+                    contador_nome += 1
+                    fila.append(destino_fset)
+                    estados.add(destino_fset)
+                transicoes[(nome_estados[estado], simbolo)] = nome_estados[destino_fset]
+
+    # 5. Determinar estados de aceitação
+    for estado in estados:
+        for pos in estado:
+            if pos_to_symbol[pos] == '#':
+                estados_aceitacao.add(nome_estados[estado])
+                break
+
+    # 6. Construir o AFD
+    afd = AFD(
+        nome=nome,
+        estados=set(nome_estados.values()),
+        alfabeto=alfabeto,
+        transicoes=transicoes,
+        estado_inicial=nome_estados[estado_inicial],
+        estados_aceitacao=estados_aceitacao
+    )
+
+    return afd
+
+
+
+def main():
+    from pathlib import Path
+
+    # Suponha que afd.py tenha uma função para imprimir ou visualizar AFDs, ou use __str__()
+    input_file = "entrada.txt"  # Arquivo com ERs nomeadas
+
+    if not Path(input_file).exists():
+        print(f"Arquivo '{input_file}' não encontrado.")
+        return
+
+    er_dict = Parser. process_er_file("entrada.txt")
+    for name, er in er_dict.items():
+        #print(f"{name}: {er}")
+    
+        try:
+
+            print(f"\nConstruindo AFD para '{name}' com ER: {er}")
+            tree = Tree.create_tree( er)
+            print("TESTEEE")
+            print("tree:", tree)
+            afd = create_afd(tree)
+            afd.escrever_arquivo()
+
+            print("Teste")
+            #print(f"\nAFD para {name}:")
+            print(afd)
+        except Exception as e:
+            print(f"Erro ao processar linha '{er.strip()}': {e}")
+
+if __name__ == "__main__":
+    main()
