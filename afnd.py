@@ -51,7 +51,6 @@ class AFND:
         estados.add(estado_inicial)
         transicoes[(estado_inicial, '&')] = set()
         for af in automatos:
-            print(f"Mapeamento de {af.nome}: {af.mapeamento}")
             # Cria um prefixo único para cada AFD para evitar conflitos de nomes
             prefixo = f"{af.nome}_"
             # Une estados, alfabeto, transições e estados de aceitação de cada AFD
@@ -212,11 +211,11 @@ class AFND:
                     transicoes[(estado_atual, simbolo)] = estado_proximo
         mapeamento = {nome: set() for nome in self.mapeamento.keys()}
         for conjunto, novo_estado in equivalentes.items():
-            for identificador, estados in self.mapeamento.items():
-                if any(estado in conjunto for estado in estados):
+            for identificador, estados_afd in self.mapeamento.items():
+                if any(estado in conjunto for estado in estados_afd):
                     mapeamento[identificador].add(novo_estado)
         # Retorna o AFD determinizado
-        return AFD(f"{self.nome}_determinizado", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao, mapeamento)
+        return AFD("AFD_FINAL", estados, alfabeto, transicoes, estado_inicial, estados_aceitacao, mapeamento)
 
 
 def main():
