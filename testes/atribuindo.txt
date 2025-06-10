@@ -1,0 +1,4 @@
+meuInt = 3
+meuBool = true
+meuOutroInt = 99
+minhaString = "Oi"

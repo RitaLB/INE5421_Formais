@@ -1,0 +1,8 @@
+palavra-chave: (while|for|if|else|elif|break|return|def)
+operador-bool: (not|and|or)
+booleano: (true|false)
+id: [a-zA-Z]([a-zA-Z] | [0-9])*
+num: [1-9]([0-9])* | 0
+comparador: ((<|>)=?)|((=|!)=)
+atribuidor: (=|<-)
+string: "([a-zA-Z] | [0-9])*"
