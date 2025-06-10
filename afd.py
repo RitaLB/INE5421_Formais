@@ -74,7 +74,7 @@ class AFD:
     
     def escrever_arquivo(self):
         """Escreve a definição do AFD em um arquivo de texto."""
-        with open(f"{self.nome}.txt", 'w') as f:
+        with open(f"automatos/{self.nome}.txt", 'w') as f:
             # Imprime número de estados
             f.write(f"{len(self.estados)}\n")
             # Imprime estado inicial
@@ -86,6 +86,28 @@ class AFD:
             # Imprime transições
             for (estado, simbolo), novo_estado in self.transicoes.items():
                 f.write(f"{estado},{simbolo},{novo_estado}\n")
+    
+    def gerar_tabela(self) -> str:
+        """Gera uma representação em string da tabela de transições do AFD.
+        
+        Returns:
+            str: A tabela de transições formatada como string.
+        """
+        tabela = "Tabela de Transições:\n"
+        tabela += f"{'Estado':<10} "
+        for simbolo in sorted(self.alfabeto):
+            tabela += f"{simbolo:<10} "
+        tabela += "Aceitação\n"
+        tabela += "-" * (10 + 11 * len(self.alfabeto)) + "\n"
+        for estado in self.estados:
+            tabela += f"{estado:<10} "
+            for simbolo in sorted(self.alfabeto):
+                novo_estado = self.transicoes.get((estado, simbolo), "ERRO")
+                tabela += f"{novo_estado:<10} "
+            tabela += f"{'Sim' if estado in self.estados_aceitacao else 'Não':<10}\n"
+        
+        with open(f"tabelas/{self.nome}_tabela.txt", 'w') as f:
+            f.write(tabela)
 
 # Exemplo de uso da classe AFD (para rodar: python3 afd.py)
 def main():
