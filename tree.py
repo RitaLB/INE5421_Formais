@@ -6,43 +6,6 @@ from typing import Set, Dict
 from abc import ABC
 # Passo 1: transformar a expressão regular em uma árvore binária
 
-
-# Criação dos nodes da árvore binária, um para cada tipo de nodo (pois têm regras de lastpos e firstpos diferentes)
-class Node:
-    """
-    Classe base para os nodos da árvore binária.
-    """
-    def __init__(self, value):
-        self.left = None
-        self.right = None
-        self.value = value
-
-    @property
-    def is_nullable(self):
-        """
-        Verifica se o nodo é nulo.
-        """
-        pass
-    
-    @property
-    def last_pos(self):
-        """
-        Retorna o conjunto lastpos do nodo.
-        """
-        pass
-
-    @property
-    def first_pos(self):
-        """
-        Retorna o conjunto firstpos do nodo.
-        """
-        pass
-
-    def follow_pos(self):
-        """
-        Retorna o conjunto followpos do nodo.
-        """
-        pass
 # Criação dos nodes da árvore binária, um para cada tipo de nodo (pois têm regras de lastpos e firstpos diferentes)
 class Node:
     """
@@ -160,7 +123,6 @@ class Tree(ABC):
             resultado += er[i]
             if i + 1 < len(er):
                 a, b = er[i], er[i+1]
-                if (a not in '(|' and b not in '|)*+.)?'):
                 if (a not in '(|' and b not in '|)*+.)?'):
                     resultado += '.'
         
@@ -361,7 +323,6 @@ class LeafNode(Node):
     """
     Nodo folha (caractere).
     """
-    def __init__(self, value, position, nullable=False):
     def __init__(self, value, position, nullable=False):
         # super().__init__(value) ?
         self.value = value
