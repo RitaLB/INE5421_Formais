@@ -1,4 +1,4 @@
-from afd import AFD
+from lexico.afd import AFD
 
 class AFND:
     def __init__(self, nome: str, estados: set[str], alfabeto: set[str], transicoes: dict[tuple[str, str], str], estado_inicial: str, estados_aceitacao: set[str], mapeamento: dict[str, set[str]] = None):

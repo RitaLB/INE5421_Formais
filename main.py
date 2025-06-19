@@ -1,5 +1,5 @@
 from sys import argv
-from analisador_lexico import AnalisadorLexico
+from lexico.analisador_lexico import AnalisadorLexico
 
 def main():
     if len(argv) != 3:

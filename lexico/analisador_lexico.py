@@ -1,7 +1,7 @@
-from parser import Parser
-from afd import AFD
-from afnd import AFND
-from tree import Tree, Node, LeafNode
+from lexico.parser import Parser
+from lexico.afd import AFD
+from lexico.afnd import AFND
+from lexico.tree import Tree, Node, LeafNode
 
 class AnalisadorLexico:
     def __init__(self, arquivo_ers: str, codigo_fonte: str):

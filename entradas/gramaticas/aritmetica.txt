@@ -1,0 +1,8 @@
+E G T U F
++ ( ) i *
+E
+E->TG
+G->+TG|&
+T->FU
+U->*FU|&
+F->(E)|i
