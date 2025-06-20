@@ -1,5 +1,6 @@
-from sintatico.gramatica import Gramatica
-from sintatico.item import Item
+from gramatica import Gramatica
+from item import Item
+from collections import deque
 
 class Canonico:
 
@@ -20,8 +21,8 @@ class Canonico:
         corpo_inicial = list(g_ext.producoes[simbolo_inicial])[0]
         item_inicial = Item(simbolo_inicial, corpo_inicial, 0)
         itens["I0"] = Canonico.closure({item_inicial})
-        fila = []
-        # Falta bastante coisa aqui ainda
+        fila = deque()
+        pass # TODO: terminar
 
     
     @staticmethod
@@ -36,16 +37,30 @@ class Canonico:
                 novo_item = Item(elemento, corpo, 0)
                 if novo_item not in j:
                     j.add(novo_item)
-                    pilha.add(novo_item)
+                    pilha.append(novo_item)
         return j
 
     @staticmethod
-    def go_to(self, i: set[Item], producoes: dict[str, set[list[str]]], elemento: str):
+    def go_to(i: set[Item], producoes: dict[str, set[list[str]]], elemento: str):
         """IMPLEMENTA GOTO(Y)"""
-        j = {item for item in i if item.elemento_do_ponto() == elemento}
+        j = {item.avancar_ponto() for item in i if item.elemento_do_ponto() == elemento}
         return Canonico.closure(j, producoes)
 
     def gerar_tabela():
         """Gera tabela de shifts, reduces e desvios baseados na coleção de itens
         e desvios."""
         pass
+
+g = Gramatica.de_arquivo("entradas/gramaticas/exemplo.txt")
+ext = g.extender()
+producoes = ext.producoes
+simbolo_inicial = ext.simbolo_inicial
+corpo_inicial = ext.producoes[simbolo_inicial][0]
+item_inicial = Item(simbolo_inicial, corpo_inicial, 0)
+i0 = Canonico.closure({item_inicial}, producoes)
+for item in i0:
+    print(f"{item.cabeca}, {item.corpo}, {item.ponto_pos}")
+print("AGORA GOTO")
+i1 = Canonico.go_to(i0, producoes, 'E')
+for item in i1:
+    print(f"{item.cabeca}, {item.corpo}, {item.ponto_pos}")

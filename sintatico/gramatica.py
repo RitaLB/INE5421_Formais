@@ -29,7 +29,7 @@ class Gramatica:
         producoes: dict[str, list[str]] = {}
         for linha in dados[3:]:
             linha = linha.split("->")
-            producoes[linha[0].strip()] = [list(x.strip()) for x in linha[1].split("|")]
+            producoes[linha[0].strip()] = [x.strip().split() for x in linha[1].split("|")]
         
         return cls(nao_terminais, terminais, producoes, simbolo_inicial)
     
@@ -89,8 +89,9 @@ class Gramatica:
     
     def extender(self):
         """Gera uma nova gramática extendida a partir desta."""
-        nao_terminais = self.nao_terminais.union({"S'"})
-        nova_prod = {"S'": {[self.simbolo_inicial]}}
+        nao_terminais = list(self.nao_terminais)
+        nao_terminais.append("S'")
+        nova_prod = {"S'": [[self.simbolo_inicial]]}
         producoes = self.producoes | nova_prod
         return Gramatica(nao_terminais, self.terminais, producoes, "S'")
                 
